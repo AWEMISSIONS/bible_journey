@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173d33">
+<meta name="description" content="A peaceful Christian tile-matching puzzle with Scripture-inspired symbols.">
+<title>Scripture Tiles — Bible Journey</title>
+<style>
+:root{--forest:#173d33;--leaf:#2d684f;--cream:#f5f0df;--paper:#fffdf6;--gold:#d9b760;--muted:#69766e;--shadow:0 8px 24px #173d3322}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#e1eddc 0,#f5f0df 58%);color:var(--forest);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+.app{max-width:900px;margin:auto;padding:16px 18px 30px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.back{border:1px solid #d7decf;background:#ffffffa8;border-radius:14px;padding:10px 14px;color:var(--forest);font-weight:700;text-decoration:none}.brand{text-align:center;flex:1}.brand b{font-family:Georgia,serif;font-size:20px;letter-spacing:.02em}.brand small{display:block;color:var(--muted);font-size:12px}.score{background:#fffdf6;padding:9px 13px;border-radius:14px;font-weight:800;box-shadow:var(--shadow);white-space:nowrap}
+.panel{background:#ffffffa8;border:1px solid #e4e5d7;border-radius:24px;padding:14px 18px;box-shadow:var(--shadow)}.status{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:620px;margin:0 auto 12px}.status strong{font-size:15px}.status span{font-size:13px;color:var(--muted)}.progress{height:7px;background:#e7e7d8;border-radius:20px;overflow:hidden;margin-top:8px}.progress i{display:block;height:100%;background:linear-gradient(90deg,#79a46a,#d9b760);transition:width .3s}
+.board-wrap{margin:auto;max-width:720px;overflow:visible;padding:2px 0 10px}.board{position:relative;width:100%;aspect-ratio:1.37;max-height:520px;margin:auto}.tile{position:absolute;width:14%;height:20%;border:1px solid #c5a967;border-radius:10px;background:linear-gradient(145deg,#fffef7 0,#f1e5c5 100%);box-shadow:0 3px 0 #c1a45f,0 5px 7px #183d3325;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#173d33;padding:2px;cursor:pointer;transition:filter .15s,transform .15s,box-shadow .15s;user-select:none;touch-action:manipulation}
+.tile.free{box-shadow:0 3px 0 #c1a45f,0 5px 8px #183d3340}.tile.free:active{transform:translateY(2px)}.tile.blocked{filter:saturate(.62) brightness(.83);box-shadow:0 2px 0 #ad985f}.tile.selected{outline:3px solid #c58c27;outline-offset:2px;transform:translateY(-4px);z-index:100!important}.tile.hint{animation:pulse .65s ease-in-out 3;outline:3px solid #79a46a;outline-offset:2px;z-index:100!important}.tile.gone{visibility:hidden;pointer-events:none}.glyph{font-size:clamp(19px,4vw,33px);line-height:1.05}.tile-label{font-size:clamp(8px,1.7vw,11px);font-weight:800;line-height:1.05;margin-top:4px;text-align:center;white-space:nowrap}.glyph.word{font-family:Georgia,serif;font-size:clamp(11px,2vw,16px);font-weight:800;background:#e9d8a6;border-radius:6px;padding:5px 4px}
+@keyframes pulse{50%{outline-color:#e9bd53;box-shadow:0 0 18px #d9b760aa}}
+.tools{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px auto 0}.tools button,.primary,.secondary{font:inherit;font-weight:750;border:0;border-radius:15px;padding:12px 16px;cursor:pointer;touch-action:manipulation}.tools button{background:#fffdf6;color:var(--forest);box-shadow:var(--shadow);min-width:94px}.tools button:active{transform:translateY(1px)}.tools small{display:inline-block;background:#e8eddc;color:#587453;padding:2px 6px;border-radius:9px;margin-right:4px}.primary{background:var(--forest);color:white}.secondary{background:#e7eadb;color:var(--forest)}.message{min-height:24px;text-align:center;color:var(--muted);font-size:13px;margin:10px 0 0}.note{max-width:620px;margin:16px auto 0;text-align:center;color:#6a756c;font:13px/1.55 Georgia,serif}
+dialog{border:0;border-radius:24px;background:var(--paper);color:var(--forest);box-shadow:0 18px 60px #10261c55;max-width:min(460px,calc(100% - 28px));padding:25px}dialog::backdrop{background:#11282088}.modal-icon{font-size:48px;text-align:center}.modal h2{font-family:Georgia,serif;text-align:center;margin:8px 0}.modal p{line-height:1.55;color:#536359}.modal-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+@media(max-width:520px){.app{padding:10px 10px 24px}.top{margin-bottom:8px}.back{padding:9px 10px;font-size:13px}.brand b{font-size:17px}.score{font-size:13px;padding:8px 10px}.panel{padding:12px}.board{aspect-ratio:1.18}.tile{width:15.3%;height:20.5%;border-radius:8px}.tile-label{font-size:8px}.tools{gap:7px}.tools button{min-width:78px;padding:10px 9px;font-size:13px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header class="top">
+<a class="back" href="./">‹ Bible Journey</a>
+<div class="brand"><b>Scripture Tiles</b><small>Find pairs. Enjoy a moment of peace.</small></div>
+<div class="score">⭐ <span id="score">0</span></div>
+</header>
+<section class="panel status">
+<div style="flex:1"><strong id="board-name">Peaceful puzzle</strong><div class="progress"><i id="progress"></i></div></div>
+<span id="remaining">18 pairs</span>
+</section>
+<div class="board-wrap"><div class="board" id="board" aria-label="Bible symbol mahjong puzzle"></div></div>
+<section class="tools" aria-label="Game controls">
+<button id="hint">💡 Hint</button><button id="shuffle">🔀 Shuffle</button><button id="undo">↶ Undo</button><button id="new">＋ New board</button>
+</section>
+<div class="message" id="message" aria-live="polite">Match identical open tiles. A tile is open when it has no tile above and one side is free.</div>
+<p class="note">A quiet puzzle inspired by classic tile matching. Symbols include the cross, fish, Bible, dove, and Scripture references.</p>
+</main>
+<dialog id="finish"><div class="modal"><div class="modal-icon">✝️</div><h2>Board complete!</h2><p>You cleared every pair. Take a breath, remember a verse, or start another peaceful puzzle.</p><p id="finish-stats" style="text-align:center;font-weight:800"></p><div class="modal-actions"><button class="secondary" id="close-finish">Close</button><button class="primary" id="again">Play again</button></div></div></dialog>
+<script>
+(function(){
+"use strict";
+var symbols=[
+ ["✝️","Cross"],["🐟","Fish"],["📖","Bible"],["🕊️","Dove"],["👑","King"],["🍞","Bread"],
+ ["🍷","Cup"],["🐑","Lamb"],["🙏","Prayer"],["⚓","Hope"],["🌿","Olive"],["⭐","Bethlehem"],
+ ["Jn 3:16","John 3:16"],["1 Cor 13","Love"],["Ps 23","Psalm 23"],["🌅","Resurrection"],
+ ["💧","Baptism"],["🛡️","Faith"]
+];
+var layouts=[];
+for(var y=0;y<4;y++)for(var x=0;x<6;x++)layouts.push({x:x,y:y,z:0});
+for(var y2=1;y2<3;y2++)for(var x2=1;x2<5;x2++)layouts.push({x:x2,y:y2,z:1});
+for(var y3=1;y3<3;y3++)for(var x3=2;x3<4;x3++)layouts.push({x:x3,y:y3,z:2});
+var board=document.getElementById("board"),message=document.getElementById("message"),selected=null,history=[],moves=0,matched=0,seed=0;
+var scoreNode=document.getElementById("score"),remainNode=document.getElementById("remaining"),progress=document.getElementById("progress"),boardName=document.getElementById("board-name");
+var saved=0;try{saved=Number(localStorage.getItem("scripture-tiles-score")||0)}catch(e){}
+scoreNode.textContent=saved;
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),v=a[i];a[i]=a[j];a[j]=v}return a}
+function deal(){
+ seed++; selected=null;history=[];moves=0;matched=0;
+ var deck=[];symbols.forEach(function(s){deck.push(s,s)});shuffle(deck);
+ window.tiles=layouts.map(function(pos,i){return {id:i,x:pos.x,y:pos.y,z:pos.z,symbol:deck[i],gone:false}});
+ boardName.textContent=["Peaceful puzzle","A moment in the Word","Fishers of people","Light of the world"][seed%4];
+ render();say("Match identical open tiles.");
+}
+function above(t){return window.tiles.some(function(o){return !o.gone&&o.z>t.z&&Math.abs(o.x-t.x)<1&&Math.abs(o.y-t.y)<1})}
+function neighbor(t,dir){return window.tiles.some(function(o){return !o.gone&&o.z===t.z&&o.y===t.y&&o.x===t.x+dir})}
+function free(t){return !t.gone&&!above(t)&&(!neighbor(t,-1)||!neighbor(t,1))}
+function available(){var f=window.tiles.filter(free),pairs=[];for(var i=0;i<f.length;i++)for(var j=i+1;j<f.length;j++)if(f[i].symbol===f[j].symbol)pairs.push([f[i],f[j]]);return pairs}
+function position(t){var mobile=window.innerWidth<=520;var step=mobile?15.4:14.3;var left=mobile?3.5:7.2;var top=mobile?5:4.5;return {left:(left+t.x*step+t.z*3.2)+"%",top:(top+t.y*(mobile?21:21)+t.z*4.2)+"%"}}
+function render(){
+ board.innerHTML="";
+ window.tiles.slice().sort(function(a,b){return a.z-b.z||a.id-b.id}).forEach(function(t){
+ var b=document.createElement("button");b.type="button";b.className="tile "+(free(t)?"free":"blocked")+(t.gone?" gone":"")+(selected===t.id?" selected":"");b.setAttribute("aria-label",t.symbol[1]+(free(t)?", open":" , blocked"));
+ var p=position(t);b.style.left=p.left;b.style.top=p.top;b.style.zIndex=10+t.z*50+t.id;
+ var glyph=document.createElement("span");glyph.className="glyph"+(t.symbol[0].length>4||t.symbol[0].indexOf(" ")>=0?" word":"");glyph.textContent=t.symbol[0];
+ var label=document.createElement("span");label.className="tile-label";label.textContent=t.symbol[1];b.append(glyph,label);b.onclick=function(){tap(t)};board.appendChild(b);
+ });
+ remainNode.textContent=(18-matched)+" pairs left";
+ progress.style.width=(matched/18*100)+"%";
+}
+function say(text){message.textContent=text}
+function tap(t){
+ if(!free(t)){say("That tile is covered or closed on both sides.");return}
+ if(selected===null){selected=t.id;render();return}
+ if(selected===t.id){selected=null;render();return}
+ var first=window.tiles.find(function(x){return x.id===selected});
+ moves++;
+ if(first.symbol===t.symbol){
+ first.gone=true;t.gone=true;history.push([first.id,t.id]);selected=null;matched++;saved+=10;scoreNode.textContent=saved;try{localStorage.setItem("scripture-tiles-score",String(saved))}catch(e){}
+ say("A match! Keep going at your own pace.");
+ if(matched===18){document.getElementById("finish-stats").textContent=moves+" moves · "+saved+" points";document.getElementById("finish").showModal()}
+ else if(!available().length){say("No open pair right now. Use Shuffle to rearrange the remaining symbols.")}
+ }else{selected=t.id;say("Those symbols do not match. Try another open tile.")}
+ render();
+}
+document.getElementById("hint").onclick=function(){var p=available()[0];if(!p){say("No open pair. Shuffle the board to uncover a match.");return}selected=p[0].id;render();var buttons=board.querySelectorAll(".tile");buttons.forEach(function(b){var n=Number(b.getAttribute("aria-label").length);});say("Look for the highlighted "+p[0].symbol[1]+" pair.");setTimeout(function(){var first=board.querySelectorAll(".tile")[p[0].id];var second=board.querySelectorAll(".tile")[p[1].id];if(first)first.classList.add("hint");if(second)second.classList.add("hint")},20)};
+document.getElementById("shuffle").onclick=function(){var active=window.tiles.filter(function(t){return !t.gone}),values=shuffle(active.map(function(t){return t.symbol}));active.forEach(function(t,i){t.symbol=values[i]});selected=null;render();say("Remaining symbols shuffled. Look for a new open pair.")};
+document.getElementById("undo").onclick=function(){var last=history.pop();if(!last){say("There are no matches to undo yet.");return}last.forEach(function(id){window.tiles[id].gone=false});matched--;selected=null;render();say("Last match restored.")};
+document.getElementById("new").onclick=function(){if(confirm("Start a new board? Your points will be kept."))deal()};
+document.getElementById("close-finish").onclick=function(){document.getElementById("finish").close()};
+document.getElementById("again").onclick=function(){document.getElementById("finish").close();deal()};
+deal();
+})();
+</script>
+</body>
+</html>
