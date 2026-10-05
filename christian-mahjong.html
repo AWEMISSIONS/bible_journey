@@ -71,7 +71,7 @@ function position(t){var mobile=window.innerWidth<=520;var step=mobile?15.4:14.3
 function render(){
  board.innerHTML="";
  window.tiles.slice().sort(function(a,b){return a.z-b.z||a.id-b.id}).forEach(function(t){
- var b=document.createElement("button");b.type="button";b.className="tile "+(free(t)?"free":"blocked")+(t.gone?" gone":"")+(selected===t.id?" selected":"");b.setAttribute("aria-label",t.symbol[1]+(free(t)?", open":" , blocked"));
+ var b=document.createElement("button");b.type="button";b.className="tile "+(free(t)?"free":"blocked")+(t.gone?" gone":"")+(selected===t.id?" selected":"");b.setAttribute("data-id",String(t.id));b.setAttribute("aria-label",t.symbol[1]+(free(t)?", open":", blocked"));
  var p=position(t);b.style.left=p.left;b.style.top=p.top;b.style.zIndex=10+t.z*50+t.id;
  var glyph=document.createElement("span");glyph.className="glyph"+(t.symbol[0].length>4||t.symbol[0].indexOf(" ")>=0?" word":"");glyph.textContent=t.symbol[0];
  var label=document.createElement("span");label.className="tile-label";label.textContent=t.symbol[1];b.append(glyph,label);b.onclick=function(){tap(t)};board.appendChild(b);
@@ -94,7 +94,7 @@ function tap(t){
  }else{selected=t.id;say("Those symbols do not match. Try another open tile.")}
  render();
 }
-document.getElementById("hint").onclick=function(){var p=available()[0];if(!p){say("No open pair. Shuffle the board to uncover a match.");return}selected=p[0].id;render();var buttons=board.querySelectorAll(".tile");buttons.forEach(function(b){var n=Number(b.getAttribute("aria-label").length);});say("Look for the highlighted "+p[0].symbol[1]+" pair.");setTimeout(function(){var first=board.querySelectorAll(".tile")[p[0].id];var second=board.querySelectorAll(".tile")[p[1].id];if(first)first.classList.add("hint");if(second)second.classList.add("hint")},20)};
+document.getElementById("hint").onclick=function(){var p=available()[0];if(!p){say("No open pair. Shuffle the board to uncover a match.");return}selected=p[0].id;render();var first=board.querySelector('[data-id="'+p[0].id+'"]');var second=board.querySelector('[data-id="'+p[1].id+'"]');if(first)first.classList.add("hint");if(second)second.classList.add("hint");say("Look for the highlighted "+p[0].symbol[1]+" pair.");setTimeout(function(){if(first)first.classList.remove("hint");if(second)second.classList.remove("hint")},2000)};
 document.getElementById("shuffle").onclick=function(){var active=window.tiles.filter(function(t){return !t.gone}),values=shuffle(active.map(function(t){return t.symbol}));active.forEach(function(t,i){t.symbol=values[i]});selected=null;render();say("Remaining symbols shuffled. Look for a new open pair.")};
 document.getElementById("undo").onclick=function(){var last=history.pop();if(!last){say("There are no matches to undo yet.");return}last.forEach(function(id){window.tiles[id].gone=false});matched--;selected=null;render();say("Last match restored.")};
 document.getElementById("new").onclick=function(){if(confirm("Start a new board? Your points will be kept."))deal()};
