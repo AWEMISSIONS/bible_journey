@@ -75,7 +75,7 @@ function buildLayout(pairCount,level){
 }
 function deal(advance){
  if(advance){if(currentLevel>=4000){currentLevel=4000;say("You reached level 4,000. Choose another level in Settings.");return}currentLevel++}else currentLevel=selectedLevel;
- seed++; selected=null;history=[];moves=0;matched=0;totalPairs=pairsForLevel(currentLevel);
+ seed++; selected=null;history=[];moves=0;matched=0;totalPairs=pairsForLevel(currentLevel);try{localStorage.setItem("scripture-tiles-level",String(currentLevel))}catch(e){}
  var deck=[];for(var p=0;p<totalPairs;p++){var sym=symbols[p%symbols.length];deck.push(sym,sym)}shuffle(deck);
  var layout=buildLayout(totalPairs,currentLevel),positions=Array.isArray(layout)?layout:layout.tiles;
  var rows=Array.isArray(layout)?4:layout.rows,cols=Array.isArray(layout)?6:layout.cols;
