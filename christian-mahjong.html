@@ -7,6 +7,7 @@
 <meta name="description" content="A peaceful Christian tile-matching puzzle with Scripture-inspired symbols.">
 <title>Scripture Tiles — Bible Journey</title>
 <style>
+.settings-button{white-space:nowrap;padding:10px 12px!important}.level-label{display:block;text-align:left;font-weight:800;margin:12px 0 6px}.level-hint{font-size:13px!important;background:#f3f0e5;padding:10px;border-radius:10px}.modal input{width:100%;border:1px solid #c8c2ae;border-radius:12px;padding:13px;font:700 20px system-ui;color:var(--forest)}
 :root{--forest:#173d33;--leaf:#2d684f;--cream:#f5f0df;--paper:#fffdf6;--gold:#d9b760;--muted:#69766e;--shadow:0 8px 24px #173d3322}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#e1eddc 0,#f5f0df 58%);color:var(--forest);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
 .app{max-width:900px;margin:auto;padding:16px 18px 30px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.back{border:1px solid #d7decf;background:#ffffffa8;border-radius:14px;padding:10px 14px;color:var(--forest);font-weight:700;text-decoration:none}.brand{text-align:center;flex:1}.brand b{font-family:Georgia,serif;font-size:20px;letter-spacing:.02em}.brand small{display:block;color:var(--muted);font-size:12px}.score{background:#fffdf6;padding:9px 13px;border-radius:14px;font-weight:800;box-shadow:var(--shadow);white-space:nowrap}
@@ -16,7 +17,7 @@
 @keyframes pulse{50%{outline-color:#e9bd53;box-shadow:0 0 18px #d9b760aa}}
 .tools{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px auto 0}.tools button,.primary,.secondary{font:inherit;font-weight:750;border:0;border-radius:15px;padding:12px 16px;cursor:pointer;touch-action:manipulation}.tools button{background:#fffdf6;color:var(--forest);box-shadow:var(--shadow);min-width:94px}.tools button:active{transform:translateY(1px)}.tools small{display:inline-block;background:#e8eddc;color:#587453;padding:2px 6px;border-radius:9px;margin-right:4px}.primary{background:var(--forest);color:white}.secondary{background:#e7eadb;color:var(--forest)}.message{min-height:24px;text-align:center;color:var(--muted);font-size:13px;margin:10px 0 0}.note{max-width:620px;margin:16px auto 0;text-align:center;color:#6a756c;font:13px/1.55 Georgia,serif}
 dialog{border:0;border-radius:24px;background:var(--paper);color:var(--forest);box-shadow:0 18px 60px #10261c55;max-width:min(460px,calc(100% - 28px));padding:25px}dialog::backdrop{background:#11282088}.modal-icon{font-size:48px;text-align:center}.modal h2{font-family:Georgia,serif;text-align:center;margin:8px 0}.modal p{line-height:1.55;color:#536359}.modal-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
-@media(max-width:520px){.app{padding:10px 10px 24px}.top{margin-bottom:8px}.back{padding:9px 10px;font-size:13px}.brand b{font-size:17px}.score{font-size:13px;padding:8px 10px}.panel{padding:12px}.board{aspect-ratio:1.18}.tile{width:15.3%;height:20.5%;border-radius:8px}.tile-label{font-size:8px}.tools{gap:7px}.tools button{min-width:78px;padding:10px 9px;font-size:13px}}
+@media(max-width:520px){.app{padding:10px 10px 24px}.top{margin-bottom:8px;flex-wrap:wrap}.back{padding:9px 10px;font-size:13px}.brand b{font-size:17px}.score{font-size:13px;padding:8px 10px}.settings-button{padding:8px 10px!important;font-size:12px}.panel{padding:12px}.board{aspect-ratio:1.18}.tile{width:15.3%;height:20.5%;border-radius:8px}.tile-label{font-size:8px}.tools{gap:7px}.tools button{min-width:78px;padding:10px 9px;font-size:13px}}
 </style>
 </head>
 <body>
@@ -24,7 +25,7 @@ dialog{border:0;border-radius:24px;background:var(--paper);color:var(--forest);b
 <header class="top">
 <a class="back" href="./">‹ Bible Journey</a>
 <div class="brand"><b>Scripture Tiles</b><small>Find pairs. Enjoy a moment of peace.</small></div>
-<div class="score">⭐ <span id="score">0</span></div>
+<div class="score">⭐ <span id="score">0</span></div><button class="secondary settings-button" id="open-settings" type="button">⚙ Settings</button>
 </header>
 <section class="panel status">
 <div style="flex:1"><strong id="board-name">Peaceful puzzle</strong><div class="progress"><i id="progress"></i></div></div>
@@ -37,6 +38,7 @@ dialog{border:0;border-radius:24px;background:var(--paper);color:var(--forest);b
 <div class="message" id="message" aria-live="polite">Match identical open tiles. A tile is open when it has no tile above and one side is free.</div>
 <p class="note">A quiet puzzle inspired by classic tile matching. Symbols include the cross, fish, Bible, dove, and Scripture references.</p>
 </main>
+<dialog id="settings"><div class="modal"><div class="modal-icon">⚙️</div><h2>Game settings</h2><p>Choose your Mahjong challenge level. The game builds harder boards as you progress, up to level 4,000.</p><label class="level-label" for="level-input">Starting level</label><input id="level-input" type="number" min="1" max="4000" step="1" inputmode="numeric"><p class="level-hint" id="level-hint" aria-live="polite"></p><div class="modal-actions"><button class="secondary" id="cancel-settings" type="button">Cancel</button><button class="primary" id="apply-level" type="button">Start this level</button></div></div></dialog>
 <dialog id="finish"><div class="modal"><div class="modal-icon">✝️</div><h2>Board complete!</h2><p>You cleared every pair. Take a breath, remember a verse, or start another peaceful puzzle.</p><p id="finish-stats" style="text-align:center;font-weight:800"></p><div class="modal-actions"><button class="secondary" id="close-finish">Close</button><button class="primary" id="again">Play again</button></div></div></dialog>
 <script>
 (function(){
@@ -51,33 +53,52 @@ var layouts=[];
 for(var y=0;y<4;y++)for(var x=0;x<6;x++)layouts.push({x:x,y:y,z:0});
 for(var y2=1;y2<3;y2++)for(var x2=1;x2<5;x2++)layouts.push({x:x2,y:y2,z:1});
 for(var y3=1;y3<3;y3++)for(var x3=2;x3<4;x3++)layouts.push({x:x3,y:y3,z:2});
-var board=document.getElementById("board"),message=document.getElementById("message"),selected=null,history=[],moves=0,matched=0,seed=0;
+var board=document.getElementById("board"),message=document.getElementById("message"),selected=null,history=[],moves=0,matched=0,seed=0,totalPairs=18;
+var selectedLevel=1,currentLevel=1;try{selectedLevel=Math.max(1,Math.min(4000,parseInt(localStorage.getItem("scripture-tiles-level")||"1",10)||1))}catch(e){}
+currentLevel=selectedLevel;
 var scoreNode=document.getElementById("score"),remainNode=document.getElementById("remaining"),progress=document.getElementById("progress"),boardName=document.getElementById("board-name");
 var saved=0;try{saved=Number(localStorage.getItem("scripture-tiles-score")||0)}catch(e){}
 scoreNode.textContent=saved;
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),v=a[i];a[i]=a[j];a[j]=v}return a}
-function deal(){
- seed++; selected=null;history=[];moves=0;matched=0;
- var deck=[];symbols.forEach(function(s){deck.push(s,s)});shuffle(deck);
- window.tiles=layouts.map(function(pos,i){return {id:i,x:pos.x,y:pos.y,z:pos.z,symbol:deck[i],gone:false}});
- boardName.textContent=["Peaceful puzzle","A moment in the Word","Fishers of people","Light of the world"][seed%4];
- render();say("Match identical open tiles.");
+function pairsForLevel(level){return Math.min(50,18+Math.floor((level-1)/125))}
+function buildLayout(pairCount,level){
+ if(pairCount===18&&level<=125)return layouts.map(function(pos){return {x:pos.x,y:pos.y,z:pos.z}});
+ var total=pairCount*2,stackCount=Math.min(12,Math.floor((level-1)/350),Math.floor(total/8));
+ var baseCount=total-stackCount,cols=8,rows=Math.ceil(baseCount/cols),coords=[];
+ for(var i=0;i<baseCount;i++)coords.push({x:i%cols,y:Math.floor(i/cols),z:0});
+ for(var j=0;j<stackCount;j++){
+  var target=Math.floor(baseCount/2)+((j%2===0)?Math.floor(j/2):-Math.floor(j/2)-1);
+  target=Math.max(0,Math.min(baseCount-1,target));
+  coords.push({x:coords[target].x,y:coords[target].y,z:1+Math.floor(j/6)});
+ }
+ return {tiles:coords,cols:cols,rows:rows};
+}
+function deal(advance){
+ if(advance){if(currentLevel>=4000){currentLevel=4000;say("You reached level 4,000. Choose another level in Settings.");return}currentLevel++}else currentLevel=selectedLevel;
+ seed++; selected=null;history=[];moves=0;matched=0;totalPairs=pairsForLevel(currentLevel);
+ var deck=[];for(var p=0;p<totalPairs;p++){var sym=symbols[p%symbols.length];deck.push(sym,sym)}shuffle(deck);
+ var layout=buildLayout(totalPairs,currentLevel),positions=Array.isArray(layout)?layout:layout.tiles;
+ var rows=Array.isArray(layout)?4:layout.rows,cols=Array.isArray(layout)?6:layout.cols;
+ board.style.aspectRatio=cols+"/"+rows;board.style.maxHeight="none";
+ window.tiles=positions.map(function(pos,i){return {id:i,x:pos.x,y:pos.y,z:pos.z,symbol:deck[i],gone:false,rows:rows,cols:cols}});
+ boardName.textContent="Level "+currentLevel+" · "+["Peaceful puzzle","A moment in the Word","Fishers of people","Light of the world"][seed%4];
+ render();say("Match identical open tiles. Higher levels add more pairs and layered tiles.");
 }
 function above(t){return window.tiles.some(function(o){return !o.gone&&o.z>t.z&&Math.abs(o.x-t.x)<1&&Math.abs(o.y-t.y)<1})}
 function neighbor(t,dir){return window.tiles.some(function(o){return !o.gone&&o.z===t.z&&o.y===t.y&&o.x===t.x+dir})}
 function free(t){return !t.gone&&!above(t)&&(!neighbor(t,-1)||!neighbor(t,1))}
 function available(){var f=window.tiles.filter(free),pairs=[];for(var i=0;i<f.length;i++)for(var j=i+1;j<f.length;j++)if(f[i].symbol===f[j].symbol)pairs.push([f[i],f[j]]);return pairs}
-function position(t){var mobile=window.innerWidth<=520;var step=mobile?15.4:14.3;var left=mobile?3.5:7.2;var top=mobile?5:4.5;return {left:(left+t.x*step+t.z*3.2)+"%",top:(top+t.y*(mobile?21:21)+t.z*4.2)+"%"}}
+function position(t){if(totalPairs===18&&currentLevel<=125){var mobile=window.innerWidth<=520;var step=mobile?15.4:14.3;var left=mobile?3.5:7.2;var top=mobile?5:4.5;return {left:(left+t.x*step+t.z*3.2)+"%",top:(top+t.y*21+t.z*4.2)+"%"}}var stepX=11.6,stepY=92/Math.max(1,t.rows),tileWidth=11.2,tileHeight=Math.min(16,stepY);return {left:(2+t.x*stepX+t.z*2)+"%",top:(3+t.y*stepY+t.z*1.4)+"%",width:tileWidth+"%",height:tileHeight+"%"}}
 function render(){
  board.innerHTML="";
  window.tiles.slice().sort(function(a,b){return a.z-b.z||a.id-b.id}).forEach(function(t){
  var b=document.createElement("button");b.type="button";b.className="tile "+(free(t)?"free":"blocked")+(t.gone?" gone":"")+(selected===t.id?" selected":"");b.setAttribute("data-id",String(t.id));b.setAttribute("aria-label",t.symbol[1]+(free(t)?", open":", blocked"));
- var p=position(t);b.style.left=p.left;b.style.top=p.top;b.style.zIndex=10+t.z*50+t.id;
+ var p=position(t);b.style.left=p.left;b.style.top=p.top;if(p.width){b.style.width=p.width;b.style.height=p.height}b.style.zIndex=10+t.z*50+t.id;
  var glyph=document.createElement("span");glyph.className="glyph"+(t.symbol[0].length>4||t.symbol[0].indexOf(" ")>=0?" word":"");glyph.textContent=t.symbol[0];
  var label=document.createElement("span");label.className="tile-label";label.textContent=t.symbol[1];b.append(glyph,label);b.onclick=function(){tap(t)};board.appendChild(b);
  });
- remainNode.textContent=(18-matched)+" pairs left";
- progress.style.width=(matched/18*100)+"%";
+ remainNode.textContent=(totalPairs-matched)+" pairs left · Level "+currentLevel;
+ progress.style.width=(matched/totalPairs*100)+"%";
 }
 function say(text){message.textContent=text}
 function tap(t){
@@ -97,9 +118,14 @@ function tap(t){
 document.getElementById("hint").onclick=function(){var p=available()[0];if(!p){say("No open pair. Shuffle the board to uncover a match.");return}selected=p[0].id;render();var first=board.querySelector('[data-id="'+p[0].id+'"]');var second=board.querySelector('[data-id="'+p[1].id+'"]');if(first)first.classList.add("hint");if(second)second.classList.add("hint");say("Look for the highlighted "+p[0].symbol[1]+" pair.");setTimeout(function(){if(first)first.classList.remove("hint");if(second)second.classList.remove("hint")},2000)};
 document.getElementById("shuffle").onclick=function(){var active=window.tiles.filter(function(t){return !t.gone}),values=shuffle(active.map(function(t){return t.symbol}));active.forEach(function(t,i){t.symbol=values[i]});selected=null;render();say("Remaining symbols shuffled. Look for a new open pair.")};
 document.getElementById("undo").onclick=function(){var last=history.pop();if(!last){say("There are no matches to undo yet.");return}last.forEach(function(id){window.tiles[id].gone=false});matched--;selected=null;render();say("Last match restored.")};
-document.getElementById("new").onclick=function(){if(confirm("Start a new board? Your points will be kept."))deal()};
+document.getElementById("new").onclick=function(){if(confirm("Start the next level? Your points will be kept."))deal(true)};
+document.getElementById("open-settings").onclick=function(){document.getElementById("level-input").value=selectedLevel;document.getElementById("settings").showModal();updateLevelHint()};
+document.getElementById("cancel-settings").onclick=function(){document.getElementById("settings").close()};
+document.getElementById("level-input").oninput=updateLevelHint;
+function updateLevelHint(){var value=Math.max(1,Math.min(4000,parseInt(document.getElementById("level-input").value||"1",10)||1));var pairs=pairsForLevel(value);document.getElementById("level-hint").textContent="Level "+value+" starts with "+pairs+" matching pairs; boards gain pairs every 125 levels and extra layers at higher milestones."}
+document.getElementById("apply-level").onclick=function(){var field=document.getElementById("level-input");selectedLevel=Math.max(1,Math.min(4000,parseInt(field.value||"1",10)||1));field.value=selectedLevel;try{localStorage.setItem("scripture-tiles-level",String(selectedLevel))}catch(e){}currentLevel=selectedLevel-1;document.getElementById("settings").close();deal(true)};
 document.getElementById("close-finish").onclick=function(){document.getElementById("finish").close()};
-document.getElementById("again").onclick=function(){document.getElementById("finish").close();deal()};
+document.getElementById("again").onclick=function(){document.getElementById("finish").close();if(currentLevel<4000)deal(true);else{selectedLevel=4000;deal(false)}};
 deal();
 })();
 </script>
