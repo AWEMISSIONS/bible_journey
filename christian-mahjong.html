@@ -8,7 +8,7 @@
 <title>Scripture Tiles — Bible Journey</title>
 <style>
 .glyph.svg-glyph{width:clamp(24px,4vw,38px);height:clamp(24px,4vw,38px);font-size:0}.glyph.svg-glyph svg{width:100%;height:100%;display:block}
-.settings-button{white-space:nowrap;padding:10px 12px!important}.level-label{display:block;text-align:left;font-weight:800;margin:12px 0 6px}.level-hint{font-size:13px!important;background:#f3f0e5;padding:10px;border-radius:10px}.modal input{width:100%;border:1px solid #c8c2ae;border-radius:12px;padding:13px;font:700 20px system-ui;color:var(--forest)}
+.settings-button{white-space:nowrap;padding:10px 12px!important}.level-label{display:block;text-align:left;font-weight:800;margin:12px 0 6px}.level-hint{font-size:13px!important;background:#f3f0e5;padding:10px;border-radius:10px}.modal input,.modal select{width:100%;border:1px solid #c8c2ae;border-radius:12px;padding:13px;font:700 18px system-ui;color:var(--forest);background:#fffdf6}
 :root{--forest:#173d33;--leaf:#2d684f;--cream:#f5f0df;--paper:#fffdf6;--gold:#d9b760;--muted:#69766e;--shadow:0 8px 24px #173d3322}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#e1eddc 0,#f5f0df 58%);color:var(--forest);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
 .app{max-width:900px;margin:auto;padding:16px 18px 30px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.back{border:1px solid #d7decf;background:#ffffffa8;border-radius:14px;padding:10px 14px;color:var(--forest);font-weight:700;text-decoration:none}.brand{text-align:center;flex:1}.brand b{font-family:Georgia,serif;font-size:20px;letter-spacing:.02em}.brand small{display:block;color:var(--muted);font-size:12px}.score{background:#fffdf6;padding:9px 13px;border-radius:14px;font-weight:800;box-shadow:var(--shadow);white-space:nowrap}
@@ -39,7 +39,7 @@ dialog{border:0;border-radius:24px;background:var(--paper);color:var(--forest);b
 <div class="message" id="message" aria-live="polite">Match identical open tiles. A tile is open when it has no tile above and one side is free.</div>
 <p class="note">A quiet puzzle inspired by classic tile matching. Symbols include the cross, fish, Bible, dove, and Scripture references.</p>
 </main>
-<dialog id="settings"><div class="modal"><div class="modal-icon">⚙️</div><h2>Game settings</h2><p>Choose a starting level up to 4,000. Play continues beyond it, alternating classic tiles with color-and-shape look-alikes. Boards stay within 7 × 7.</p><label class="level-label" for="level-input">Starting level</label><input id="level-input" type="number" min="1" max="4000" step="1" inputmode="numeric"><p class="level-hint" id="level-hint" aria-live="polite"></p><div class="modal-actions"><button class="secondary" id="cancel-settings" type="button">Cancel</button><button class="primary" id="apply-level" type="button">Start this level</button></div></div></dialog>
+<dialog id="settings"><div class="modal"><div class="modal-icon">⚙️</div><h2>Game settings</h2><p>Choose a starting level up to 4,000, then keep progressing forever. Each 250 levels adds another pair. Tiles stack when they outnumber the selected grid.</p><label class="level-label" for="level-input">Starting level</label><input id="level-input" type="number" min="1" max="4000" step="1" inputmode="numeric"><label class="level-label" for="board-size-input">Maximum board size</label><select id="board-size-input"><option value="5">5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7 · recommended for phones</option><option value="8">8 × 8</option><option value="9">9 × 9</option><option value="10">10 × 10</option></select><p class="level-hint" id="level-hint" aria-live="polite"></p><div class="modal-actions"><button class="secondary" id="cancel-settings" type="button">Cancel</button><button class="primary" id="apply-level" type="button">Start this level</button></div></div></dialog>
 <dialog id="finish"><div class="modal"><div class="modal-icon">✝️</div><h2>Board complete!</h2><p>You cleared every pair. Take a breath, remember a verse, or start another peaceful puzzle.</p><p id="finish-stats" style="text-align:center;font-weight:800"></p><div class="modal-actions"><button class="secondary" id="close-finish">Close</button><button class="primary" id="again">Play again</button></div></div></dialog>
 <script>
 (function(){
@@ -71,8 +71,8 @@ for(var y=0;y<4;y++)for(var x=0;x<6;x++)layouts.push({x:x,y:y,z:0});
 for(var y2=1;y2<3;y2++)for(var x2=1;x2<5;x2++)layouts.push({x:x2,y:y2,z:1});
 for(var y3=1;y3<3;y3++)for(var x3=2;x3<4;x3++)layouts.push({x:x3,y:y3,z:2});
 var board=document.getElementById("board"),message=document.getElementById("message"),selected=null,history=[],moves=0,matched=0,seed=0,totalPairs=18;
-var selectedLevel=1,currentLevel=1n;
-try{var savedLevel=localStorage.getItem("scripture-tiles-level")||"1";if(/^\d+$/.test(savedLevel))currentLevel=BigInt(savedLevel);selectedLevel=currentLevel<=4000n?Number(currentLevel):4000}catch(e){}
+var selectedLevel=1,currentLevel=1n,boardSize=7;
+try{var savedLevel=localStorage.getItem("scripture-tiles-level")||"1";if(/^\d+$/.test(savedLevel))currentLevel=BigInt(savedLevel);selectedLevel=currentLevel<=4000n?Number(currentLevel):4000;var savedBoardSize=parseInt(localStorage.getItem("scripture-tiles-board-size")||"7",10);if(savedBoardSize>=5&&savedBoardSize<=10)boardSize=savedBoardSize}catch(e){}
 var scoreNode=document.getElementById("score"),remainNode=document.getElementById("remaining"),progress=document.getElementById("progress"),boardName=document.getElementById("board-name");
 var saved=0;try{saved=Number(localStorage.getItem("scripture-tiles-score")||0)}catch(e){}
 scoreNode.textContent=saved;
@@ -99,29 +99,25 @@ function makeGuaranteedDeck(positions,tileTypes){
  pairs.forEach(function(pair,i){deck[pair[0]]=pairValues[i];deck[pair[1]]=pairValues[i]});
  return deck;
 }
-function pairsForLevel(level){return Math.min(24,18+Number((level-1n)/250n))}
+function pairsForLevel(level){return 18+Number((level-1n)/250n)}
 function tileTypesForLevel(level,pairCount){var pool=level%2n===0n?lookalikeSymbols:symbols,out=[];for(var i=0;i<pairCount;i++)out.push(pool[i%pool.length]);return out}
-function buildLayout(pairCount,level){
- if(pairCount===18&&level<=125n)return layouts.map(function(pos){return {x:pos.x,y:pos.y,z:pos.z}});
- var total=pairCount*2,cols=7,rows,coords=[];
- var stackLimit=Math.floor(total/8),stackTier=(level-1n)/350n;
- var stackCount=Number(stackTier>BigInt(stackLimit)?BigInt(stackLimit):stackTier);
- var baseCount=total-stackCount;rows=Math.ceil(baseCount/cols);
- for(var i=0;i<baseCount;i++)coords.push({x:i%cols,y:Math.floor(i/cols),z:0});
- for(var j=0;j<stackCount;j++){
-  var target=Math.floor(baseCount/2)+((j%2===0)?Math.floor(j/2):-Math.floor(j/2)-1);
-  target=Math.max(0,Math.min(baseCount-1,target));
-  coords.push({x:coords[target].x,y:coords[target].y,z:1+Math.floor(j/6)});
+function buildLayout(pairCount,size){
+ var total=pairCount*2,cells=size*size,coords=[];
+ for(var i=0;i<total;i++){
+  var layer=Math.floor(i/cells),slot=i%cells;
+  slot=(slot+layer*Math.max(1,Math.floor(size/2)))%cells;
+  coords.push({x:slot%size,y:Math.floor(slot/size),z:layer});
  }
- return {tiles:coords,cols:cols,rows:rows};
+ var rows=Math.min(size,Math.ceil(Math.min(total,cells)/size));
+ return {tiles:coords,cols:size,rows:Math.max(1,rows)};
 }
 function deal(advance,useSavedLevel){
  if(advance)currentLevel++;else if(!useSavedLevel)currentLevel=BigInt(selectedLevel);
  seed++; selected=null;history=[];moves=0;matched=0;totalPairs=pairsForLevel(currentLevel);try{localStorage.setItem("scripture-tiles-level",String(currentLevel))}catch(e){}
- var layout=buildLayout(totalPairs,currentLevel),positions=Array.isArray(layout)?layout:layout.tiles;
+ var layout=buildLayout(totalPairs,boardSize),positions=layout.tiles;
  var isLookalike=currentLevel%2n===0n,tileTypes=tileTypesForLevel(currentLevel,totalPairs);
  var deck=makeGuaranteedDeck(positions,tileTypes);if(!deck){deck=[];tileTypes.forEach(function(sym){deck.push(sym,sym)});shuffle(deck)}
- var rows=Array.isArray(layout)?4:layout.rows,cols=Array.isArray(layout)?6:layout.cols;
+ var rows=layout.rows,cols=layout.cols;
  board.style.aspectRatio=cols+"/"+rows;board.style.maxHeight="none";
  window.tiles=positions.map(function(pos,i){return {id:i,x:pos.x,y:pos.y,z:pos.z,symbol:deck[i],gone:false,rows:rows,cols:cols}});
  boardName.textContent="Level "+currentLevel+" · "+(isLookalike?"Color & shape challenge":"Classic challenge");
@@ -131,7 +127,7 @@ function above(t){return window.tiles.some(function(o){return !o.gone&&o.z>t.z&&
 function neighbor(t,dir){return window.tiles.some(function(o){return !o.gone&&o.z===t.z&&o.y===t.y&&o.x===t.x+dir})}
 function free(t){return !t.gone&&!above(t)&&(!neighbor(t,-1)||!neighbor(t,1))}
 function available(){var f=window.tiles.filter(free),pairs=[];for(var i=0;i<f.length;i++)for(var j=i+1;j<f.length;j++)if(f[i].symbol===f[j].symbol)pairs.push([f[i],f[j]]);return pairs}
-function position(t){if(totalPairs===18&&currentLevel<=125n){var mobile=window.innerWidth<=520;var step=mobile?15.4:14.3;var left=mobile?3.5:7.2;var top=mobile?5:4.5;return {left:(left+t.x*step+t.z*3.2)+"%",top:(top+t.y*21+t.z*4.2)+"%"}}var stepX=13.4,stepY=92/Math.max(1,t.rows),tileWidth=12.5,tileHeight=Math.min(16,stepY);return {left:(2+t.x*stepX+t.z*1.1)+"%",top:(3+t.y*stepY+t.z*1.1)+"%",width:tileWidth+"%",height:tileHeight+"%"}}
+function position(t){var stepX=94/t.cols,stepY=92/Math.max(1,t.rows),tileWidth=94/t.cols,tileHeight=92/Math.max(1,t.rows);return {left:(3+t.x*stepX)+"%",top:(4+t.y*stepY)+"%",width:tileWidth+"%",height:tileHeight+"%"}}
 function render(){
  board.innerHTML="";
  window.tiles.slice().sort(function(a,b){return a.z-b.z||a.id-b.id}).forEach(function(t){
@@ -162,11 +158,11 @@ document.getElementById("hint").onclick=function(){var p=available()[0];if(!p){s
 document.getElementById("shuffle").onclick=function(){var active=window.tiles.filter(function(t){return !t.gone}),values=shuffle(active.map(function(t){return t.symbol}));active.forEach(function(t,i){t.symbol=values[i]});selected=null;render();say("Remaining symbols shuffled. Look for a new open pair.")};
 document.getElementById("undo").onclick=function(){var last=history.pop();if(!last){say("There are no matches to undo yet.");return}last.forEach(function(id){window.tiles[id].gone=false});matched--;selected=null;render();say("Last match restored.")};
 document.getElementById("new").onclick=function(){if(confirm("Start the next level? Your points will be kept."))deal(true)};
-document.getElementById("open-settings").onclick=function(){document.getElementById("level-input").value=selectedLevel;document.getElementById("settings").showModal();updateLevelHint()};
+document.getElementById("open-settings").onclick=function(){document.getElementById("level-input").value=selectedLevel;document.getElementById("board-size-input").value=boardSize;document.getElementById("settings").showModal();updateLevelHint()};
 document.getElementById("cancel-settings").onclick=function(){document.getElementById("settings").close()};
-document.getElementById("level-input").oninput=updateLevelHint;
-function updateLevelHint(){var value=Math.max(1,Math.min(4000,parseInt(document.getElementById("level-input").value||"1",10)||1));var level=BigInt(value),pairs=pairsForLevel(level),mode=level%2n===0n?"color-and-shape look-alikes":"classic tiles";document.getElementById("level-hint").textContent="Level "+value+" starts with "+pairs+" pairs using "+mode+". Tile area stays within 7 × 7; every other level adds look-alike art."}
-document.getElementById("apply-level").onclick=function(){var field=document.getElementById("level-input");selectedLevel=Math.max(1,Math.min(4000,parseInt(field.value||"1",10)||1));field.value=selectedLevel;try{localStorage.setItem("scripture-tiles-level",String(selectedLevel))}catch(e){}currentLevel=BigInt(selectedLevel);document.getElementById("settings").close();deal(false)};
+document.getElementById("level-input").oninput=updateLevelHint;document.getElementById("board-size-input").onchange=updateLevelHint;
+function updateLevelHint(){var value=Math.max(1,Math.min(4000,parseInt(document.getElementById("level-input").value||"1",10)||1)),size=parseInt(document.getElementById("board-size-input").value||"7",10)||7;var level=BigInt(value),pairs=pairsForLevel(level),mode=level%2n===0n?"color-and-shape look-alikes":"classic tiles";document.getElementById("level-hint").textContent="Level "+value+" starts with "+pairs+" pairs using "+mode+". Grid: "+size+" × "+size+" maximum; extra tiles stack in layers. 7 × 7 is recommended for phones."}
+document.getElementById("apply-level").onclick=function(){var field=document.getElementById("level-input");selectedLevel=Math.max(1,Math.min(4000,parseInt(field.value||"1",10)||1));field.value=selectedLevel;boardSize=Math.max(5,Math.min(10,parseInt(document.getElementById("board-size-input").value||"7",10)||7));try{localStorage.setItem("scripture-tiles-level",String(selectedLevel));localStorage.setItem("scripture-tiles-board-size",String(boardSize))}catch(e){}currentLevel=BigInt(selectedLevel);document.getElementById("settings").close();deal(false)};
 document.getElementById("close-finish").onclick=function(){document.getElementById("finish").close()};
 document.getElementById("again").onclick=function(){document.getElementById("finish").close();deal(true)};
 deal(false,true);
