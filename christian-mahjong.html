@@ -121,7 +121,7 @@ function deal(advance,useSavedLevel){
  board.style.aspectRatio=cols+"/"+rows;board.style.maxHeight="none";
  window.tiles=positions.map(function(pos,i){return {id:i,x:pos.x,y:pos.y,z:pos.z,symbol:deck[i],gone:false,rows:rows,cols:cols}});
  boardName.textContent="Level "+currentLevel+" · "+(isLookalike?"Color & shape challenge":"Classic challenge");
- render();say((isLookalike?"Look-alike round":"Classic round")+" · Match the exact artwork. The board stays within 7 × 7.");
+ render();say((isLookalike?"Look-alike round":"Classic round")+" · Match the exact artwork. Grid: "+boardSize+" × "+boardSize+" maximum; extra tiles stack in layers.");
 }
 function above(t){return window.tiles.some(function(o){return !o.gone&&o.z>t.z&&Math.abs(o.x-t.x)<1&&Math.abs(o.y-t.y)<1})}
 function neighbor(t,dir){return window.tiles.some(function(o){return !o.gone&&o.z===t.z&&o.y===t.y&&o.x===t.x+dir})}
