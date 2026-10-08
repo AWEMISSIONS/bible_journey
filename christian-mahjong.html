@@ -55,7 +55,7 @@ for(var y2=1;y2<3;y2++)for(var x2=1;x2<5;x2++)layouts.push({x:x2,y:y2,z:1});
 for(var y3=1;y3<3;y3++)for(var x3=2;x3<4;x3++)layouts.push({x:x3,y:y3,z:2});
 var board=document.getElementById("board"),message=document.getElementById("message"),selected=null,history=[],moves=0,matched=0,seed=0,totalPairs=18;
 var selectedLevel=1,currentLevel=1n;
-try{var savedLevel=localStorage.getItem("scripture-tiles-level")||"1";if(/^\\d+$/.test(savedLevel))currentLevel=BigInt(savedLevel);selectedLevel=currentLevel<=4000n?Number(currentLevel):4000}catch(e){}
+try{var savedLevel=localStorage.getItem("scripture-tiles-level")||"1";if(/^\d+$/.test(savedLevel))currentLevel=BigInt(savedLevel);selectedLevel=currentLevel<=4000n?Number(currentLevel):4000}catch(e){}
 var scoreNode=document.getElementById("score"),remainNode=document.getElementById("remaining"),progress=document.getElementById("progress"),boardName=document.getElementById("board-name");
 var saved=0;try{saved=Number(localStorage.getItem("scripture-tiles-score")||0)}catch(e){}
 scoreNode.textContent=saved;
@@ -70,7 +70,7 @@ function buildLayout(pairCount,level){
  var total=pairCount*2,cols=8,rows,coords=[];
  var stackLimit=Math.floor(total/8),stackTier=(level-1n)/350n;
  var stackCount=Number(stackTier>BigInt(stackLimit)?BigInt(stackLimit):stackTier);
- var baseCount=total-stackCount,cols=8,rows=Math.ceil(baseCount/cols),coords=[];
+ var baseCount=total-stackCount;rows=Math.ceil(baseCount/cols);
  for(var i=0;i<baseCount;i++)coords.push({x:i%cols,y:Math.floor(i/cols),z:0});
  for(var j=0;j<stackCount;j++){
   var target=Math.floor(baseCount/2)+((j%2===0)?Math.floor(j/2):-Math.floor(j/2)-1);
