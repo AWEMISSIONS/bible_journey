@@ -60,6 +60,28 @@ var scoreNode=document.getElementById("score"),remainNode=document.getElementByI
 var saved=0;try{saved=Number(localStorage.getItem("scripture-tiles-score")||0)}catch(e){}
 scoreNode.textContent=saved;
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),v=a[i];a[i]=a[j];a[j]=v}return a}
+function makeGuaranteedDeck(positions){
+ var removed=new Uint8Array(positions.length),byXY=Object.create(null),byPos=Object.create(null),pairs=[],remaining=positions.length;
+ function xyKey(p){return p.x+","+p.y}
+ function posKey(p){return p.x+","+p.y+","+p.z}
+ positions.forEach(function(p,i){var xy=xyKey(p);(byXY[xy]||(byXY[xy]=[])).push(i);byPos[posKey(p)]=i});
+ function free(i){
+  if(removed[i])return false;
+  var p=positions[i],same=byXY[xyKey(p)];
+  for(var k=0;k<same.length;k++){var above=same[k];if(!removed[above]&&positions[above].z>p.z)return false}
+  var left=byPos[(p.x-1)+","+p.y+","+p.z],right=byPos[(p.x+1)+","+p.y+","+p.z];
+  return (left===undefined||removed[left]===1)||(right===undefined||removed[right]===1);
+ }
+ while(remaining>0){
+  var open=[];for(var i=0;i<positions.length;i++)if(free(i))open.push(i);
+  if(open.length<2)return null;
+  var first=open[0],last=open[open.length-1];pairs.push([first,last]);removed[first]=removed[last]=1;remaining-=2;
+ }
+ var pairValues=pairs.map(function(_,i){return symbols[i%symbols.length]});shuffle(pairValues);
+ var deck=new Array(positions.length);
+ pairs.forEach(function(pair,i){deck[pair[0]]=pairValues[i];deck[pair[1]]=pairValues[i]});
+ return deck;
+}
 function pairsForLevel(level){
  if(level<=4000n)return 18+Number((level-1n)/125n);
  var bits=level.toString(2).length,base=1n<<BigInt(bits-1),progress=Number((level-base)*10000n/base)/10000;
@@ -82,8 +104,8 @@ function buildLayout(pairCount,level){
 function deal(advance,useSavedLevel){
  if(advance)currentLevel++;else if(!useSavedLevel)currentLevel=BigInt(selectedLevel);
  seed++; selected=null;history=[];moves=0;matched=0;totalPairs=pairsForLevel(currentLevel);try{localStorage.setItem("scripture-tiles-level",String(currentLevel))}catch(e){}
- var deck=[];for(var p=0;p<totalPairs;p++){var sym=symbols[p%symbols.length];deck.push(sym,sym)}shuffle(deck);
  var layout=buildLayout(totalPairs,currentLevel),positions=Array.isArray(layout)?layout:layout.tiles;
+ var deck=makeGuaranteedDeck(positions);if(!deck){deck=[];for(var p=0;p<totalPairs;p++){var sym=symbols[p%symbols.length];deck.push(sym,sym)}shuffle(deck)}
  var rows=Array.isArray(layout)?4:layout.rows,cols=Array.isArray(layout)?6:layout.cols;
  board.style.aspectRatio=cols+"/"+rows;board.style.maxHeight="none";
  window.tiles=positions.map(function(pos,i){return {id:i,x:pos.x,y:pos.y,z:pos.z,symbol:deck[i],gone:false,rows:rows,cols:cols}});
