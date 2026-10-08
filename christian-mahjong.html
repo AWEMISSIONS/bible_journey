@@ -143,11 +143,12 @@ function render(){
 function say(text){message.textContent=text}
 function addPoints(points){saved+=points;scoreNode.textContent=saved;try{localStorage.setItem("scripture-tiles-score",String(saved))}catch(e){}}
 function celebrate(count){
- if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ var reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+ if(reduced)count=Math.min(count,24);
  var layer=document.createElement("div");layer.className="confetti-layer";layer.setAttribute("aria-hidden","true");
  var colors=["#d54137","#3478d4","#d9b760","#66a876","#f08b45","#8b6bc4"];
- for(var i=0;i<count;i++){var piece=document.createElement("i");piece.className="confetti-piece";piece.style.left=(Math.random()*100)+"%";piece.style.backgroundColor=colors[i%colors.length];piece.style.setProperty("--drift",((Math.random()-.5)*260)+"px");piece.style.setProperty("--spin",(Math.random()*900+360)+"deg");piece.style.animationDelay=(Math.random()*.55)+"s";piece.style.animationDuration=(2.2+Math.random()*1.4)+"s";layer.appendChild(piece)}
- document.body.appendChild(layer);setTimeout(function(){layer.remove()},4300);
+ for(var i=0;i<count;i++){var piece=document.createElement("i");piece.className="confetti-piece";piece.style.left=(Math.random()*100)+"%";piece.style.backgroundColor=colors[i%colors.length];if(reduced){piece.style.animation="none";piece.style.top=(Math.random()*88)+"%";piece.style.transform="rotate("+(Math.random()*360)+"deg)"}else{piece.style.setProperty("--drift",((Math.random()-.5)*260)+"px");piece.style.setProperty("--spin",(Math.random()*900+360)+"deg");piece.style.animationDelay=(Math.random()*.55)+"s";piece.style.animationDuration=(2.2+Math.random()*1.4)+"s"}layer.appendChild(piece)}
+ document.body.appendChild(layer);setTimeout(function(){layer.remove()},reduced?1800:4300);
 }
 function tap(t){
  if(!free(t)){say("That tile is covered or closed on both sides.");return}
