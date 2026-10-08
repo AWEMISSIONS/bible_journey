@@ -148,7 +148,7 @@ function celebrate(count){
  var layer=document.createElement("div");layer.className="confetti-layer";layer.setAttribute("aria-hidden","true");
  var colors=["#d54137","#3478d4","#d9b760","#66a876","#f08b45","#8b6bc4"];
  for(var i=0;i<count;i++){var piece=document.createElement("i");piece.className="confetti-piece";piece.style.left=(Math.random()*100)+"%";piece.style.backgroundColor=colors[i%colors.length];if(reduced){piece.style.animation="none";piece.style.top=(Math.random()*88)+"%";piece.style.transform="rotate("+(Math.random()*360)+"deg)"}else{piece.style.setProperty("--drift",((Math.random()-.5)*260)+"px");piece.style.setProperty("--spin",(Math.random()*900+360)+"deg");piece.style.animationDelay=(Math.random()*.55)+"s";piece.style.animationDuration=(2.2+Math.random()*1.4)+"s"}layer.appendChild(piece)}
- document.body.appendChild(layer);setTimeout(function(){layer.remove()},reduced?1800:4300);
+ var openDialog=document.querySelector("dialog[open]");(openDialog||document.body).appendChild(layer);setTimeout(function(){layer.remove()},reduced?1800:4300);
 }
 function tap(t){
  if(!free(t)){say("That tile is covered or closed on both sides.");return}
@@ -162,16 +162,16 @@ function tap(t){
   if(streakReward){addPoints(25);celebrate(34)}
   render();
   if(matched===totalPairs){
-   addPoints(100);celebrate(100);
+   addPoints(100);
    document.getElementById("finish-title").textContent="Level "+currentLevel+" complete!";
    document.getElementById("finish-copy").textContent="You cleared every pair. Your next board is Level "+(currentLevel+1n)+". The next board starts only when you choose Play next level.";
    document.getElementById("finish-stats").textContent=moves+" moves · best streak "+bestStreak+" · +100 completion points · "+saved+" total points";
-   document.getElementById("finish").showModal();return;
+   document.getElementById("finish").showModal();celebrate(100);return;
   }
   if(!midpointShown&&matched>=Math.ceil(totalPairs/2)){
-   midpointShown=true;addPoints(50);celebrate(58);
+   midpointShown=true;addPoints(50);
    document.getElementById("midpoint-copy").textContent="You have matched "+matched+" of "+totalPairs+" pairs on Level "+currentLevel+". This is a reward checkpoint, not the end of the level. Continue this board to finish the remaining pairs.";
-   document.getElementById("midpoint").showModal();return;
+   document.getElementById("midpoint").showModal();celebrate(58);return;
   }
   if(streakReward)say("🔥 "+streak+"-match streak! +25 bonus points.");
   else if(!available().length)say("No open pair right now. Shuffle will restore a solvable layout from the remaining tiles.");
