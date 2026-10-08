@@ -38,7 +38,7 @@ dialog{border:0;border-radius:24px;background:var(--paper);color:var(--forest);b
 <div class="message" id="message" aria-live="polite">Match identical open tiles. A tile is open when it has no tile above and one side is free.</div>
 <p class="note">A quiet puzzle inspired by classic tile matching. Symbols include the cross, fish, Bible, dove, and Scripture references.</p>
 </main>
-<dialog id="settings"><div class="modal"><div class="modal-icon">⚙️</div><h2>Game settings</h2><p>Choose your Mahjong challenge level. The game builds harder boards as you progress, up to level 4,000.</p><label class="level-label" for="level-input">Starting level</label><input id="level-input" type="number" min="1" max="4000" step="1" inputmode="numeric"><p class="level-hint" id="level-hint" aria-live="polite"></p><div class="modal-actions"><button class="secondary" id="cancel-settings" type="button">Cancel</button><button class="primary" id="apply-level" type="button">Start this level</button></div></div></dialog>
+<dialog id="settings"><div class="modal"><div class="modal-icon">⚙️</div><h2>Game settings</h2><p>Choose a starting level up to 4,000. From there, play advances beyond 4,000 with increasingly larger and more layered boards.</p><label class="level-label" for="level-input">Starting level</label><input id="level-input" type="number" min="1" max="4000" step="1" inputmode="numeric"><p class="level-hint" id="level-hint" aria-live="polite"></p><div class="modal-actions"><button class="secondary" id="cancel-settings" type="button">Cancel</button><button class="primary" id="apply-level" type="button">Start this level</button></div></div></dialog>
 <dialog id="finish"><div class="modal"><div class="modal-icon">✝️</div><h2>Board complete!</h2><p>You cleared every pair. Take a breath, remember a verse, or start another peaceful puzzle.</p><p id="finish-stats" style="text-align:center;font-weight:800"></p><div class="modal-actions"><button class="secondary" id="close-finish">Close</button><button class="primary" id="again">Play again</button></div></div></dialog>
 <script>
 (function(){
@@ -54,16 +54,22 @@ for(var y=0;y<4;y++)for(var x=0;x<6;x++)layouts.push({x:x,y:y,z:0});
 for(var y2=1;y2<3;y2++)for(var x2=1;x2<5;x2++)layouts.push({x:x2,y:y2,z:1});
 for(var y3=1;y3<3;y3++)for(var x3=2;x3<4;x3++)layouts.push({x:x3,y:y3,z:2});
 var board=document.getElementById("board"),message=document.getElementById("message"),selected=null,history=[],moves=0,matched=0,seed=0,totalPairs=18;
-var selectedLevel=1,currentLevel=1;try{selectedLevel=Math.max(1,Math.min(4000,parseInt(localStorage.getItem("scripture-tiles-level")||"1",10)||1))}catch(e){}
-currentLevel=selectedLevel;
+var selectedLevel=1,currentLevel=1n;
+try{var savedLevel=localStorage.getItem("scripture-tiles-level")||"1";if(/^\\d+$/.test(savedLevel))currentLevel=BigInt(savedLevel);selectedLevel=currentLevel<=4000n?Number(currentLevel):4000}catch(e){}
 var scoreNode=document.getElementById("score"),remainNode=document.getElementById("remaining"),progress=document.getElementById("progress"),boardName=document.getElementById("board-name");
 var saved=0;try{saved=Number(localStorage.getItem("scripture-tiles-score")||0)}catch(e){}
 scoreNode.textContent=saved;
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),v=a[i];a[i]=a[j];a[j]=v}return a}
-function pairsForLevel(level){return Math.min(50,18+Math.floor((level-1)/125))}
+function pairsForLevel(level){
+ if(level<=4000n)return 18+Number((level-1n)/125n);
+ var bits=level.toString(2).length,base=1n<<BigInt(bits-1),progress=Number((level-base)*10000n/base)/10000;
+ return 49+Math.max(0,bits-12)*2+Math.floor(progress*2);
+}
 function buildLayout(pairCount,level){
- if(pairCount===18&&level<=125)return layouts.map(function(pos){return {x:pos.x,y:pos.y,z:pos.z}});
- var total=pairCount*2,stackCount=Math.min(12,Math.floor((level-1)/350),Math.floor(total/8));
+ if(pairCount===18&&level<=125n)return layouts.map(function(pos){return {x:pos.x,y:pos.y,z:pos.z}});
+ var total=pairCount*2,cols=8,rows,coords=[];
+ var stackLimit=Math.floor(total/8),stackTier=(level-1n)/350n;
+ var stackCount=Number(stackTier>BigInt(stackLimit)?BigInt(stackLimit):stackTier);
  var baseCount=total-stackCount,cols=8,rows=Math.ceil(baseCount/cols),coords=[];
  for(var i=0;i<baseCount;i++)coords.push({x:i%cols,y:Math.floor(i/cols),z:0});
  for(var j=0;j<stackCount;j++){
@@ -73,8 +79,8 @@ function buildLayout(pairCount,level){
  }
  return {tiles:coords,cols:cols,rows:rows};
 }
-function deal(advance){
- if(advance){if(currentLevel>=4000){currentLevel=4000;say("You reached level 4,000. Choose another level in Settings.");return}currentLevel++}else currentLevel=selectedLevel;
+function deal(advance,useSavedLevel){
+ if(advance)currentLevel++;else if(!useSavedLevel)currentLevel=BigInt(selectedLevel);
  seed++; selected=null;history=[];moves=0;matched=0;totalPairs=pairsForLevel(currentLevel);try{localStorage.setItem("scripture-tiles-level",String(currentLevel))}catch(e){}
  var deck=[];for(var p=0;p<totalPairs;p++){var sym=symbols[p%symbols.length];deck.push(sym,sym)}shuffle(deck);
  var layout=buildLayout(totalPairs,currentLevel),positions=Array.isArray(layout)?layout:layout.tiles;
@@ -122,11 +128,11 @@ document.getElementById("new").onclick=function(){if(confirm("Start the next lev
 document.getElementById("open-settings").onclick=function(){document.getElementById("level-input").value=selectedLevel;document.getElementById("settings").showModal();updateLevelHint()};
 document.getElementById("cancel-settings").onclick=function(){document.getElementById("settings").close()};
 document.getElementById("level-input").oninput=updateLevelHint;
-function updateLevelHint(){var value=Math.max(1,Math.min(4000,parseInt(document.getElementById("level-input").value||"1",10)||1));var pairs=pairsForLevel(value);document.getElementById("level-hint").textContent="Level "+value+" starts with "+pairs+" matching pairs; boards gain pairs every 125 levels and extra layers at higher milestones."}
-document.getElementById("apply-level").onclick=function(){var field=document.getElementById("level-input");selectedLevel=Math.max(1,Math.min(4000,parseInt(field.value||"1",10)||1));field.value=selectedLevel;try{localStorage.setItem("scripture-tiles-level",String(selectedLevel))}catch(e){}currentLevel=selectedLevel-1;document.getElementById("settings").close();deal(true)};
+function updateLevelHint(){var value=Math.max(1,Math.min(4000,parseInt(document.getElementById("level-input").value||"1",10)||1));var pairs=pairsForLevel(BigInt(value));document.getElementById("level-hint").textContent="Level "+value+" starts with "+pairs+" matching pairs. Play continues beyond 4,000 with larger, more layered boards."}
+document.getElementById("apply-level").onclick=function(){var field=document.getElementById("level-input");selectedLevel=Math.max(1,Math.min(4000,parseInt(field.value||"1",10)||1));field.value=selectedLevel;try{localStorage.setItem("scripture-tiles-level",String(selectedLevel))}catch(e){}currentLevel=BigInt(selectedLevel);document.getElementById("settings").close();deal(false)};
 document.getElementById("close-finish").onclick=function(){document.getElementById("finish").close()};
-document.getElementById("again").onclick=function(){document.getElementById("finish").close();if(currentLevel<4000)deal(true);else{selectedLevel=4000;deal(false)}};
-deal();
+document.getElementById("again").onclick=function(){document.getElementById("finish").close();deal(true)};
+deal(false,true);
 })();
 </script>
 </body>
