@@ -19,6 +19,7 @@
 .tools{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px auto 0}.tools button,.primary,.secondary{font:inherit;font-weight:750;border:0;border-radius:15px;padding:12px 16px;cursor:pointer;touch-action:manipulation}.tools button{background:#fffdf6;color:var(--forest);box-shadow:var(--shadow);min-width:94px}.tools button:active{transform:translateY(1px)}.tools small{display:inline-block;background:#e8eddc;color:#587453;padding:2px 6px;border-radius:9px;margin-right:4px}.primary{background:var(--forest);color:white}.secondary{background:#e7eadb;color:var(--forest)}.message{min-height:24px;text-align:center;color:var(--muted);font-size:13px;margin:10px 0 0}.note{max-width:620px;margin:16px auto 0;text-align:center;color:#6a756c;font:13px/1.55 Georgia,serif}
 dialog{border:0;border-radius:24px;background:var(--paper);color:var(--forest);box-shadow:0 18px 60px #10261c55;max-width:min(460px,calc(100% - 28px));padding:25px}dialog::backdrop{background:#11282088}.modal-icon{font-size:48px;text-align:center}.modal h2{font-family:Georgia,serif;text-align:center;margin:8px 0}.modal p{line-height:1.55;color:#536359}.modal-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
 @media(max-width:520px){.app{padding:10px 10px 24px}.top{margin-bottom:8px;flex-wrap:wrap}.back{padding:9px 10px;font-size:13px}.brand b{font-size:17px}.score{font-size:13px;padding:8px 10px}.settings-button{padding:8px 10px!important;font-size:12px}.panel{padding:12px}.board{aspect-ratio:1.18}.tile{width:15.3%;height:20.5%;border-radius:8px}.tile-label{font-size:8px}.tools{gap:7px}.tools button{min-width:78px;padding:10px 9px;font-size:13px}}
+ .confetti-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:99999}.confetti-piece{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation:confetti-fall 2.8s cubic-bezier(.2,.7,.4,1) both}@keyframes confetti-fall{to{transform:translate3d(var(--drift),110vh,0) rotate(var(--spin));opacity:0}}@media(prefers-reduced-motion:reduce){.confetti-piece{animation-duration:.01ms}}
 </style>
 </head>
 <body>
@@ -40,7 +41,7 @@ dialog{border:0;border-radius:24px;background:var(--paper);color:var(--forest);b
 <p class="note">A quiet puzzle inspired by classic tile matching. Symbols include the cross, fish, Bible, dove, and Scripture references.</p>
 </main>
 <dialog id="settings"><div class="modal"><div class="modal-icon">⚙️</div><h2>Game settings</h2><p>Choose a starting level up to 4,000, then keep progressing forever. Each 250 levels adds another pair. Tiles stack when they outnumber the selected grid.</p><label class="level-label" for="level-input">Starting level</label><input id="level-input" type="number" min="1" max="4000" step="1" inputmode="numeric"><label class="level-label" for="board-size-input">Maximum board size</label><select id="board-size-input"><option value="5">5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7 · recommended for phones</option><option value="8">8 × 8</option><option value="9">9 × 9</option><option value="10">10 × 10</option></select><p class="level-hint" id="level-hint" aria-live="polite"></p><div class="modal-actions"><button class="secondary" id="cancel-settings" type="button">Cancel</button><button class="primary" id="apply-level" type="button">Start this level</button></div></div></dialog>
-<dialog id="finish"><div class="modal"><div class="modal-icon">✝️</div><h2>Board complete!</h2><p>You cleared every pair. Take a breath, remember a verse, or start another peaceful puzzle.</p><p id="finish-stats" style="text-align:center;font-weight:800"></p><div class="modal-actions"><button class="secondary" id="close-finish">Close</button><button class="primary" id="again">Play again</button></div></div></dialog>
+<dialog id="midpoint"><div class="modal"><div class="modal-icon">🎉</div><h2>Halfway there!</h2><p id="midpoint-copy"></p><p style="text-align:center;font-weight:800">+50 points · Midpoint reward</p><div class="modal-actions"><button class="primary" id="continue-board" type="button">Continue this board</button></div></div></dialog><dialog id="finish"><div class="modal"><div class="modal-icon">🏆</div><h2 id="finish-title">Level complete!</h2><p id="finish-copy"></p><p id="finish-stats" style="text-align:center;font-weight:800"></p><div class="modal-actions"><button class="secondary" id="replay-level" type="button">Replay this level</button><button class="primary" id="next-level" type="button">Play next level</button></div></div></dialog>
 <script>
 (function(){
 "use strict";
@@ -71,7 +72,7 @@ for(var y=0;y<4;y++)for(var x=0;x<6;x++)layouts.push({x:x,y:y,z:0});
 for(var y2=1;y2<3;y2++)for(var x2=1;x2<5;x2++)layouts.push({x:x2,y:y2,z:1});
 for(var y3=1;y3<3;y3++)for(var x3=2;x3<4;x3++)layouts.push({x:x3,y:y3,z:2});
 var board=document.getElementById("board"),message=document.getElementById("message"),selected=null,history=[],moves=0,matched=0,seed=0,totalPairs=18;
-var selectedLevel=1,currentLevel=1n,boardSize=7;
+var selectedLevel=1,currentLevel=1n,boardSize=7,streak=0,bestStreak=0,midpointShown=false;
 try{var savedLevel=localStorage.getItem("scripture-tiles-level")||"1";if(/^\d+$/.test(savedLevel))currentLevel=BigInt(savedLevel);selectedLevel=currentLevel<=4000n?Number(currentLevel):4000;var savedBoardSize=parseInt(localStorage.getItem("scripture-tiles-board-size")||"7",10);if(savedBoardSize>=5&&savedBoardSize<=10)boardSize=savedBoardSize}catch(e){}
 var scoreNode=document.getElementById("score"),remainNode=document.getElementById("remaining"),progress=document.getElementById("progress"),boardName=document.getElementById("board-name");
 var saved=0;try{saved=Number(localStorage.getItem("scripture-tiles-score")||0)}catch(e){}
@@ -113,7 +114,7 @@ function buildLayout(pairCount,size){
 }
 function deal(advance,useSavedLevel){
  if(advance)currentLevel++;else if(!useSavedLevel)currentLevel=BigInt(selectedLevel);
- seed++; selected=null;history=[];moves=0;matched=0;totalPairs=pairsForLevel(currentLevel);try{localStorage.setItem("scripture-tiles-level",String(currentLevel))}catch(e){}
+ seed++; selected=null;history=[];moves=0;matched=0;streak=0;bestStreak=0;midpointShown=false;totalPairs=pairsForLevel(currentLevel);try{localStorage.setItem("scripture-tiles-level",String(currentLevel))}catch(e){}
  var layout=buildLayout(totalPairs,boardSize),positions=layout.tiles;
  var isLookalike=currentLevel%2n===0n,tileTypes=tileTypesForLevel(currentLevel,totalPairs);
  var deck=makeGuaranteedDeck(positions,tileTypes);if(!deck){deck=[];tileTypes.forEach(function(sym){deck.push(sym,sym)});shuffle(deck)}
@@ -121,7 +122,7 @@ function deal(advance,useSavedLevel){
  board.style.aspectRatio=cols+"/"+rows;board.style.maxHeight="none";
  window.tiles=positions.map(function(pos,i){return {id:i,x:pos.x,y:pos.y,z:pos.z,symbol:deck[i],gone:false,rows:rows,cols:cols}});
  boardName.textContent="Level "+currentLevel+" · "+(isLookalike?"Color & shape challenge":"Classic challenge");
- render();say((isLookalike?"Look-alike round":"Classic round")+" · Match the exact artwork. Grid: "+boardSize+" × "+boardSize+" maximum; extra tiles stack in layers.");
+ render();var roundMessage=(isLookalike?"Look-alike round":"Classic round")+" · Match the exact artwork. Grid: "+boardSize+" × "+boardSize+" maximum; extra tiles stack in layers.";var activePool=isLookalike?lookalikeSymbols:symbols;if(totalPairs>activePool.length)roundMessage+=" Strategy round: some artwork repeats across multiple pairs. Choose carefully; a poor pairing can leave no open match. Shuffle will restore a solvable layout.";say(roundMessage);
 }
 function above(t){return window.tiles.some(function(o){return !o.gone&&o.z>t.z&&Math.abs(o.x-t.x)<1&&Math.abs(o.y-t.y)<1})}
 function neighbor(t,dir){return window.tiles.some(function(o){return !o.gone&&o.z===t.z&&o.y===t.y&&o.x===t.x+dir})}
@@ -140,6 +141,14 @@ function render(){
  progress.style.width=(matched/totalPairs*100)+"%";
 }
 function say(text){message.textContent=text}
+function addPoints(points){saved+=points;scoreNode.textContent=saved;try{localStorage.setItem("scripture-tiles-score",String(saved))}catch(e){}}
+function celebrate(count){
+ if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ var layer=document.createElement("div");layer.className="confetti-layer";layer.setAttribute("aria-hidden","true");
+ var colors=["#d54137","#3478d4","#d9b760","#66a876","#f08b45","#8b6bc4"];
+ for(var i=0;i<count;i++){var piece=document.createElement("i");piece.className="confetti-piece";piece.style.left=(Math.random()*100)+"%";piece.style.backgroundColor=colors[i%colors.length];piece.style.setProperty("--drift",((Math.random()-.5)*260)+"px");piece.style.setProperty("--spin",(Math.random()*900+360)+"deg");piece.style.animationDelay=(Math.random()*.55)+"s";piece.style.animationDuration=(2.2+Math.random()*1.4)+"s";layer.appendChild(piece)}
+ document.body.appendChild(layer);setTimeout(function(){layer.remove()},4300);
+}
 function tap(t){
  if(!free(t)){say("That tile is covered or closed on both sides.");return}
  if(selected===null){selected=t.id;render();return}
@@ -147,15 +156,32 @@ function tap(t){
  var first=window.tiles.find(function(x){return x.id===selected});
  moves++;
  if(first.symbol.id===t.symbol.id){
- first.gone=true;t.gone=true;history.push([first.id,t.id]);selected=null;matched++;saved+=10;scoreNode.textContent=saved;try{localStorage.setItem("scripture-tiles-score",String(saved))}catch(e){}
- say("A match! Keep going at your own pace.");
- if(matched===18){document.getElementById("finish-stats").textContent=moves+" moves · "+saved+" points";document.getElementById("finish").showModal()}
- else if(!available().length){say("No open pair right now. Use Shuffle to rearrange the remaining symbols.")}
- }else{selected=t.id;say("Those symbols do not match. Try another open tile.")}
- render();
+  first.gone=true;t.gone=true;history.push([first.id,t.id]);selected=null;matched++;streak++;bestStreak=Math.max(bestStreak,streak);addPoints(10);
+  var streakReward=streak>0&&streak%5===0;
+  if(streakReward){addPoints(25);celebrate(34)}
+  render();
+  if(matched===totalPairs){
+   addPoints(100);celebrate(100);
+   document.getElementById("finish-title").textContent="Level "+currentLevel+" complete!";
+   document.getElementById("finish-copy").textContent="You cleared every pair. Your next board is Level "+(currentLevel+1n)+". The next board starts only when you choose Play next level.";
+   document.getElementById("finish-stats").textContent=moves+" moves · best streak "+bestStreak+" · +100 completion points · "+saved+" total points";
+   document.getElementById("finish").showModal();return;
+  }
+  if(!midpointShown&&matched>=Math.ceil(totalPairs/2)){
+   midpointShown=true;addPoints(50);celebrate(58);
+   document.getElementById("midpoint-copy").textContent="You have matched "+matched+" of "+totalPairs+" pairs on Level "+currentLevel+". This is a reward checkpoint, not the end of the level. Continue this board to finish the remaining pairs.";
+   document.getElementById("midpoint").showModal();return;
+  }
+  if(streakReward)say("🔥 "+streak+"-match streak! +25 bonus points.");
+  else if(!available().length)say("No open pair right now. Shuffle will restore a solvable layout from the remaining tiles.");
+  else say("A match! "+(totalPairs>24?"Choose repeated artwork carefully; some pairings can block your next match.":"Keep going at your own pace."));
+ }else{
+  streak=0;selected=t.id;say("Those symbols do not match. Choose another open tile.");
+  render();
+ }
 }
 document.getElementById("hint").onclick=function(){var p=available()[0];if(!p){say("No open pair. Shuffle the board to uncover a match.");return}selected=p[0].id;render();var first=board.querySelector('[data-id="'+p[0].id+'"]');var second=board.querySelector('[data-id="'+p[1].id+'"]');if(first)first.classList.add("hint");if(second)second.classList.add("hint");say("Look for the highlighted "+p[0].symbol.label+" pair.");setTimeout(function(){if(first)first.classList.remove("hint");if(second)second.classList.remove("hint")},2000)};
-document.getElementById("shuffle").onclick=function(){var active=window.tiles.filter(function(t){return !t.gone}),values=shuffle(active.map(function(t){return t.symbol}));active.forEach(function(t,i){t.symbol=values[i]});selected=null;render();say("Remaining symbols shuffled. Look for a new open pair.")};
+document.getElementById("shuffle").onclick=function(){var active=window.tiles.filter(function(t){return !t.gone}),activePositions=active.map(function(t){return {x:t.x,y:t.y,z:t.z}}),types=tileTypesForLevel(currentLevel,active.length/2),deck=makeGuaranteedDeck(activePositions,types);if(!deck){say("Could not reshuffle this layout. Start the same level again from Settings.");return}active.forEach(function(t,i){t.symbol=deck[i]});selected=null;history=[];streak=0;render();say("Reshuffled! The remaining tiles now have a guaranteed solution. Cleared pairs stay cleared; undo history has reset.")};
 document.getElementById("undo").onclick=function(){var last=history.pop();if(!last){say("There are no matches to undo yet.");return}last.forEach(function(id){window.tiles[id].gone=false});matched--;selected=null;render();say("Last match restored.")};
 document.getElementById("new").onclick=function(){if(confirm("Start the next level? Your points will be kept."))deal(true)};
 document.getElementById("open-settings").onclick=function(){document.getElementById("level-input").value=selectedLevel;document.getElementById("board-size-input").value=boardSize;document.getElementById("settings").showModal();updateLevelHint()};
@@ -163,8 +189,9 @@ document.getElementById("cancel-settings").onclick=function(){document.getElemen
 document.getElementById("level-input").oninput=updateLevelHint;document.getElementById("board-size-input").onchange=updateLevelHint;
 function updateLevelHint(){var value=Math.max(1,Math.min(4000,parseInt(document.getElementById("level-input").value||"1",10)||1)),size=parseInt(document.getElementById("board-size-input").value||"7",10)||7;var level=BigInt(value),pairs=pairsForLevel(level),mode=level%2n===0n?"color-and-shape look-alikes":"classic tiles";document.getElementById("level-hint").textContent="Level "+value+" starts with "+pairs+" pairs using "+mode+". Grid: "+size+" × "+size+" maximum; extra tiles stack in layers. 7 × 7 is recommended for phones."}
 document.getElementById("apply-level").onclick=function(){var field=document.getElementById("level-input");selectedLevel=Math.max(1,Math.min(4000,parseInt(field.value||"1",10)||1));field.value=selectedLevel;boardSize=Math.max(5,Math.min(10,parseInt(document.getElementById("board-size-input").value||"7",10)||7));try{localStorage.setItem("scripture-tiles-level",String(selectedLevel));localStorage.setItem("scripture-tiles-board-size",String(boardSize))}catch(e){}currentLevel=BigInt(selectedLevel);document.getElementById("settings").close();deal(false)};
-document.getElementById("close-finish").onclick=function(){document.getElementById("finish").close()};
-document.getElementById("again").onclick=function(){document.getElementById("finish").close();deal(true)};
+document.getElementById("continue-board").onclick=function(){document.getElementById("midpoint").close();say("Midpoint reward earned. Continue the same Level "+currentLevel+" board.")};
+document.getElementById("replay-level").onclick=function(){document.getElementById("finish").close();deal(false,true)};
+document.getElementById("next-level").onclick=function(){document.getElementById("finish").close();deal(true)};
 deal(false,true);
 })();
 </script>
